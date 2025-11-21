@@ -4,50 +4,43 @@
  */
 package pkg22448734_josephgrace_server;
 
-/**
- *
- * @author joegr
- */
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
+/**
+ *
+ * @author joegr
+ */
+//Main server entry point for the EventBoard application.
 public class EventBoardServer {
 
-    // Sets port to 5000
-    private static final int PORT = 5000;
+    private static final int PORT = 1510;
 
     public static void main(String[] args) {
 
+        // Shared in-memory storage across all clients
+        EventStore store = new EventStore();
+
         System.out.println("EventBoardServer starting on port " + PORT + "...");
 
-        //Server socket listens for connections
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server is running. Waiting for clients...");
 
-            System.out.println("Server is now running and waiting for clients...");
-
-            //Loops so server will always be running and accepting new clients
+            // Infinite loop to accept multiple clients
             while (true) {
-
-                //Code blocks until a client connects and a new socket gets made
                 Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected: " + clientSocket.getRemoteSocketAddress());
 
-                System.out.println("Client connected from: " + clientSocket.getRemoteSocketAddress());
-
-                //Connects a new client handler to the socket and then creates a new thread so the server can continue looking for new clients
-                ClientHandler handler = new ClientHandler(clientSocket);
-                Thread thread = new Thread(handler);   
-                thread.start();                        
+                // Create a handler for this client and start a new thread
+                ClientHandler handler = new ClientHandler(clientSocket, store);
+                new Thread(handler).start();
             }
 
         } catch (IOException e) {
-            // Exception for networking error
-            System.err.println("Server failed: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Server error: " + e.getMessage());
         }
 
-        // Prints when server is shut down manaually
-        System.out.println("EventBoardServer has stopped.");
+        System.out.println("EventBoardServer stopped.");
     }
 }
